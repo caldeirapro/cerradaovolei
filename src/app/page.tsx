@@ -83,6 +83,14 @@ export default function Home() {
     setTimeout(() => setCopiedWhatsApp(false), 2500);
   };
 
+  const handleSendWhatsApp = () => {
+    const text = formatWhatsAppMessage(matchDetails, players);
+    const encodedText = encodeURIComponent(text);
+    // WhatsApp Universal Link - abre a tela de seleção de conversa ou grupo
+    const whatsappUrl = `https://api.whatsapp.com/send?text=${encodedText}`;
+    window.open(whatsappUrl, '_blank');
+  };
+
   const handleResetList = () => {
     if (confirm('Tem certeza que deseja zerar a lista da semana? Todos os nomes serão removidos.')) {
       setPlayers([]);
@@ -114,17 +122,25 @@ export default function Home() {
             </button>
 
             <button
-              onClick={handleCopyWhatsApp}
+              onClick={handleSendWhatsApp}
               className="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-xl font-bold text-xs flex items-center gap-1.5 shadow-md shadow-emerald-200 transition-all active:scale-95"
+              title="Compartilhar lista diretamente no WhatsApp"
+            >
+              <Share2 className="w-4 h-4" />
+              <span>Enviar no WhatsApp</span>
+            </button>
+
+            <button
+              onClick={handleCopyWhatsApp}
+              className="bg-slate-100 hover:bg-slate-200 text-slate-700 px-2.5 py-1.5 rounded-xl font-bold text-xs flex items-center gap-1 transition-colors"
+              title="Copiar texto formatado"
             >
               {copiedWhatsApp ? (
                 <>
-                  <CheckCircle className="w-4 h-4" /> Copiado!
+                  <CheckCircle className="w-4 h-4 text-emerald-600" /> Copiado!
                 </>
               ) : (
-                <>
-                  <Share2 className="w-4 h-4" /> Copiar p/ WhatsApp
-                </>
+                <>Copiar</>
               )}
             </button>
           </div>
