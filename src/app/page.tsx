@@ -1,69 +1,174 @@
-import Image from "next/image";
+'use client';
+
+import React, { useState, useEffect } from 'react';
+import { Player, MatchDetails } from '@/types';
+import {
+  getStoredPlayers,
+  saveStoredPlayers,
+  getStoredMatchDetails,
+  saveStoredMatchDetails,
+} from '@/utils/storage';
+import { formatWhatsAppMessage } from '@/utils/helpers';
+import { MatchHeader } from '@/components/MatchHeader';
+import { AddPlayerForm } from '@/components/AddPlayerForm';
+import { PlayerList } from '@/components/PlayerList';
+import { TeamDrawModal } from '@/components/TeamDrawModal';
+import { Share2, Shuffle, RefreshCw, CheckCircle } from 'lucide-react';
+import confetti from 'canvas-confetti';
 
 export default function Home() {
+  const [matchDetails, setMatchDetails] = useState<MatchDetails>({
+    title: "Cerradão Vôlei",
+    date: "Terça-feira, 02 de Setembro",
+    time: "A partir das 19h00",
+    location: "Parque da Cidade - Estacionamento 7",
+    maxPlayers: 18,
+  });
+  const [players, setPlayers] = useState<Player[]>([]);
+  const [isTeamModalOpen, setIsTeamModalOpen] = useState(false);
+  const [copiedWhatsApp, setCopiedWhatsApp] = useState(false);
+
+  useEffect(() => {
+    setMatchDetails(getStoredMatchDetails());
+    setPlayers(getStoredPlayers());
+
+    const handleStorage = () => {
+      setPlayers(getStoredPlayers());
+      setMatchDetails(getStoredMatchDetails());
+    };
+
+    window.addEventListener('storage_cerradao_players', handleStorage);
+    window.addEventListener('storage_cerradao_match', handleStorage);
+    return () => {
+      window.removeEventListener('storage_cerradao_players', handleStorage);
+      window.removeEventListener('storage_cerradao_match', handleStorage);
+    };
+  }, []);
+
+  const handleUpdateMatchDetails = (newDetails: MatchDetails) => {
+    setMatchDetails(newDetails);
+    saveStoredMatchDetails(newDetails);
+  };
+
+  const handleAddPlayer = (name: string) => {
+    const newPlayer: Player = {
+      id: Date.now().toString(),
+      name,
+      registeredAt: new Date().toISOString(),
+    };
+
+    const updated = [...players, newPlayer];
+    setPlayers(updated);
+    saveStoredPlayers(updated);
+
+    if (updated.length <= matchDetails.maxPlayers) {
+      confetti({
+        particleCount: 50,
+        spread: 60,
+        origin: { y: 0.8 },
+      });
+    }
+  };
+
+  const handleRemovePlayer = (id: string) => {
+    const updated = players.filter((p) => p.id !== id);
+    setPlayers(updated);
+    saveStoredPlayers(updated);
+  };
+
+  const handleCopyWhatsApp = () => {
+    const text = formatWhatsAppMessage(matchDetails, players);
+    navigator.clipboard.writeText(text);
+    setCopiedWhatsApp(true);
+    setTimeout(() => setCopiedWhatsApp(false), 2500);
+  };
+
+  const handleResetList = () => {
+    if (confirm('Tem certeza que deseja zerar a lista da semana? Todos os nomes serão removidos.')) {
+      setPlayers([]);
+      saveStoredPlayers([]);
+    }
+  };
+
+  const confirmedCount = Math.min(players.length, matchDetails.maxPlayers);
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
+    <main className="min-h-screen bg-slate-100 text-slate-900 pb-16">
+      {/* Top Navbar */}
+      <header className="bg-white border-b border-slate-200 sticky top-0 z-40">
+        <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="text-2xl">🏐</span>
+            <span className="font-extrabold text-lg text-slate-800 tracking-tight">
+              Cerradão Vôlei
+            </span>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setIsTeamModalOpen(true)}
+              className="bg-orange-100 hover:bg-orange-200 text-orange-700 px-3 py-1.5 rounded-xl font-bold text-xs flex items-center gap-1.5 transition-colors"
+            >
+              <Shuffle className="w-4 h-4" />
+              <span className="hidden sm:inline">Sortear Times</span>
+            </button>
+
+            <button
+              onClick={handleCopyWhatsApp}
+              className="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-xl font-bold text-xs flex items-center gap-1.5 shadow-md shadow-emerald-200 transition-all active:scale-95"
+            >
+              {copiedWhatsApp ? (
+                <>
+                  <CheckCircle className="w-4 h-4" /> Copiado!
+                </>
+              ) : (
+                <>
+                  <Share2 className="w-4 h-4" /> Copiar p/ WhatsApp
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+      </header>
+
+      {/* Main Container */}
+      <div className="max-w-4xl mx-auto px-4 pt-6">
+        <MatchHeader
+          details={matchDetails}
+          onUpdateDetails={handleUpdateMatchDetails}
+          totalConfirmed={confirmedCount}
         />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+
+        <AddPlayerForm
+          onAddPlayer={handleAddPlayer}
+          maxPlayers={matchDetails.maxPlayers}
+          currentCount={players.length}
+        />
+
+        <PlayerList
+          players={players}
+          maxPlayers={matchDetails.maxPlayers}
+          onRemovePlayer={handleRemovePlayer}
+        />
+
+        {/* Footer Actions */}
+        <div className="mt-8 flex justify-between items-center text-xs text-slate-400 border-t border-slate-200 pt-4">
+          <button
+            onClick={handleResetList}
+            className="text-slate-400 hover:text-rose-600 flex items-center gap-1 transition-colors"
           >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+            <RefreshCw className="w-3.5 h-3.5" /> Resetar Lista Semanal
+          </button>
+          <p>© Cerradão Vôlei App</p>
         </div>
-      </main>
-    </div>
+      </div>
+
+      <TeamDrawModal
+        players={players}
+        maxPlayers={matchDetails.maxPlayers}
+        isOpen={isTeamModalOpen}
+        onClose={() => setIsTeamModalOpen(false)}
+      />
+    </main>
   );
 }
