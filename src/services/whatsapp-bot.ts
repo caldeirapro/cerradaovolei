@@ -72,17 +72,26 @@ export function isWhatsAppConnected(): boolean {
 }
 
 const outboxFile = path.join(process.cwd(), 'whatsapp-outbox.json');
+let isProcessingQueue = false;
+let isQueueStarted = false;
 
 export function startWhatsAppOutboxQueue() {
+  if (isQueueStarted) {
+    return;
+  }
+  isQueueStarted = true;
+
   console.log('[WhatsApp Bot Queue] Fila de envio iniciada (verificando a cada 3s)...');
   setInterval(async () => {
-    if (!sock || !isConnected) {
+    if (!sock || !isConnected || isProcessingQueue) {
       return;
     }
 
     if (!fs.existsSync(outboxFile)) {
       return;
     }
+
+    isProcessingQueue = true;
 
     try {
       const content = fs.readFileSync(outboxFile, 'utf-8');
@@ -91,20 +100,24 @@ export function startWhatsAppOutboxQueue() {
       if (outbox.length > 0) {
         console.log(`[WhatsApp Bot Queue] Processando ${outbox.length} mensagem(ns) pendente(s)...`);
         
-        // Pega a mensagem mais recente para enviar (evita flood se houver acúmulo)
+        // Pega a mensagem mais recente para enviar e limpa a fila IMEDIATAMENTE
         const itemToSend = outbox[outbox.length - 1];
+        fs.writeFileSync(outboxFile, JSON.stringify([], null, 2));
 
-        const success = await sendGroupMessage(itemToSend.groupJid, itemToSend.message);
-
-        if (success) {
-          // Limpa a fila após o envio bem-sucedido
-          fs.writeFileSync(outboxFile, JSON.stringify([], null, 2));
-        }
+        await sendGroupMessage(itemToSend.groupJid, itemToSend.message);
       }
     } catch (err) {
       console.error('[WhatsApp Bot Queue] Erro ao ler fila de envio:', err);
+    } finally {
+      isProcessingQueue = false;
     }
   }, 3000);
+}
+
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+function getRandomNumber(min: number, max: number): number {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
 export async function sendGroupMessage(groupJid: string, text: string): Promise<boolean> {
@@ -114,12 +127,31 @@ export async function sendGroupMessage(groupJid: string, text: string): Promise<
   }
 
   try {
+    console.log(`[WhatsApp Bot] Simulando digitação humana para o grupo ${groupJid}...`);
+
+    // 1. Notifica o WhatsApp que o bot está "digitando..."
+    await sock.sendPresenceUpdate('composing', groupJid);
+
+    // 2. Calcula tempo de digitação realista proporcional ao tamanho do texto (mínimo 2.5s, máximo 6s)
+    const typingTimeMs = Math.min(Math.max(text.length * 60, 2500), 6000) + getRandomNumber(300, 1200);
+    await sleep(typingTimeMs);
+
+    // 3. Pausa a digitação pouco antes de enviar
+    await sock.sendPresenceUpdate('paused', groupJid);
+    await sleep(getRandomNumber(400, 900));
+
+    // 4. Envia a mensagem
     console.log(`[WhatsApp Bot] Enviando mensagem para o grupo ${groupJid}...`);
     await sock.sendMessage(groupJid, { text });
     console.log(`✅ [WhatsApp Bot] Mensagem enviada para o grupo com sucesso!`);
+
+    // 5. Pequena pausa após o envio
+    await sleep(getRandomNumber(1000, 2000));
+
     return true;
   } catch (error) {
     console.error(`❌ [WhatsApp Bot] Erro ao enviar mensagem para ${groupJid}:`, error);
     return false;
   }
 }
+
