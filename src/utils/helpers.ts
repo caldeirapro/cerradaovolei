@@ -28,10 +28,67 @@ export function formatWhatsAppMessage(details: MatchDetails, players: Player[]):
 }
 
 /**
+ * Calculates the next preferred match date (Tuesday = 2, Thursday = 4, Sunday = 0)
+ * Format: "Terça-feira, 01 de Setembro"
+ */
+export function getNextPreferredMatchDate(fromDate: Date = new Date()): { formattedDate: string; rawDateStr: string } {
+  const preferredDays = [2, 4, 0]; // Tuesday (2), Thursday (4), Sunday (0)
+  const currentDay = fromDate.getDay();
+
+  // Find days to add until the next preferred day
+  let minDaysToAdd = 7;
+  for (const targetDay of preferredDays) {
+    let daysToAdd = targetDay - currentDay;
+    if (daysToAdd <= 0) {
+      daysToAdd += 7; // Must be in the future (next match)
+    }
+    if (daysToAdd < minDaysToAdd) {
+      minDaysToAdd = daysToAdd;
+    }
+  }
+
+  const nextDate = new Date(fromDate);
+  nextDate.setDate(fromDate.getDate() + minDaysToAdd);
+
+  const dayNames = [
+    'Domingo',
+    'Segunda-feira',
+    'Terça-feira',
+    'Quarta-feira',
+    'Quinta-feira',
+    'Sexta-feira',
+    'Sábado',
+  ];
+
+  const monthNames = [
+    'Janeiro',
+    'Fevereiro',
+    'Março',
+    'Abril',
+    'Maio',
+    'Junho',
+    'Julho',
+    'Agosto',
+    'Setembro',
+    'Outubro',
+    'Novembro',
+    'Dezembro',
+  ];
+
+  const dayOfWeek = dayNames[nextDate.getDay()];
+  const dayNumber = String(nextDate.getDate()).padStart(2, '0');
+  const monthName = monthNames[nextDate.getMonth()];
+
+  const formattedDate = `${dayOfWeek}, ${dayNumber} de ${monthName}`;
+  const rawDateStr = nextDate.toISOString().split('T')[0];
+
+  return { formattedDate, rawDateStr };
+}
+
+/**
  * Randomly shuffles players and distributes them evenly into teams
  */
 export function getRandomTeams(players: Player[], numTeams: number = 3): Team[] {
-  // Fisher-Yates random shuffle
   const shuffled = [...players];
   for (let i = shuffled.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));

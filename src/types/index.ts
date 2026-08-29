@@ -10,6 +10,8 @@ export interface MatchDetails {
   time: string;
   location: string;
   maxPlayers: number;
+  isManuallyEdited?: boolean;
+  rawDateStr?: string; // YYYY-MM-DD format for comparing if the date passed
 }
 
 export interface Team {

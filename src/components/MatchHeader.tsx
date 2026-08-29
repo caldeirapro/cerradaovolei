@@ -16,7 +16,7 @@ export const MatchHeader: React.FC<MatchHeaderProps> = ({ details, onUpdateDetai
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
-    onUpdateDetails(formData);
+    onUpdateDetails({ ...formData, isManuallyEdited: true });
     setIsEditing(false);
   };
 
