@@ -24,6 +24,11 @@ export const TeamDrawModal: React.FC<TeamDrawModalProps> = ({
   const [teams, setTeams] = useState<Team[]>([]);
   const [isDrawn, setIsDrawn] = useState(false);
 
+  const handleClose = () => {
+    setIsDrawn(false);
+    onClose();
+  };
+
   if (!isOpen) return null;
 
   const handleDraw = () => {
@@ -47,7 +52,7 @@ export const TeamDrawModal: React.FC<TeamDrawModalProps> = ({
             <h2 className="text-xl font-bold text-slate-800">Sorteio Aleatório de Times</h2>
           </div>
           <button
-            onClick={onClose}
+            onClick={handleClose}
             className="text-slate-400 hover:text-slate-600 p-1 rounded-lg"
           >
             ✕
@@ -124,16 +129,16 @@ export const TeamDrawModal: React.FC<TeamDrawModalProps> = ({
 
             <div className="flex justify-between gap-3 pt-2">
               <button
-                onClick={handleDraw}
+                onClick={() => setIsDrawn(false)}
                 className="py-3 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-sm flex items-center gap-2"
               >
-                <RefreshCw className="w-4 h-4" /> Sortear Novamente
+                <RefreshCw className="w-4 h-4" /> Alterar Quantidade / Refazer
               </button>
               <button
-                onClick={onClose}
-                className="py-3 px-6 bg-slate-800 hover:bg-slate-900 text-white font-bold rounded-xl text-sm"
+                onClick={handleDraw}
+                className="py-3 px-4 bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-xl text-sm flex items-center gap-2 shadow-sm"
               >
-                Concluído
+                <Shuffle className="w-4 h-4" /> Resortear
               </button>
             </div>
           </div>
