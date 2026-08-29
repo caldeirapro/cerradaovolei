@@ -83,7 +83,10 @@ export const AddPlayerForm: React.FC<AddPlayerFormProps> = ({ onAddPlayer, maxPl
   };
 
   const handleQuickInsert = (selectedName: string) => {
-    setName(selectedName);
+    if (!selectedName.trim()) return;
+    saveNameToHistory(selectedName);
+    onAddPlayer(selectedName.trim());
+    setName('');
     setShowHistory(false);
   };
 
