@@ -39,3 +39,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# whatsapp bot session & temporary queue
+auth_session/
+whatsapp-outbox.json
+whatsapp-status.json
+

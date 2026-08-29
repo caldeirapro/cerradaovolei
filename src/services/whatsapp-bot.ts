@@ -1,0 +1,125 @@
+import makeWASocket, { 
+  DisconnectReason, 
+  useMultiFileAuthState, 
+  WASocket 
+} from '@whiskeysockets/baileys';
+import { Boom } from '@hapi/boom';
+import path from 'path';
+import fs from 'fs';
+
+let sock: WASocket | null = null;
+let isConnected = false;
+
+const statusFile = path.join(process.cwd(), 'whatsapp-status.json');
+
+function writeStatus(connected: boolean) {
+  try {
+    fs.writeFileSync(statusFile, JSON.stringify({ isConnected: connected, lastUpdated: Date.now() }));
+  } catch (err) {
+    console.error('[WhatsApp Bot] Failed to write status file:', err);
+  }
+}
+
+export async function connectToWhatsApp(): Promise<WASocket> {
+  writeStatus(false);
+  const authFolder = path.join(process.cwd(), 'auth_session');
+  
+  const { state, saveCreds } = await useMultiFileAuthState(authFolder);
+
+  sock = makeWASocket({
+    auth: state,
+    browser: ['Ubuntu', 'Chrome', '20.0.04'],
+    markOnlineOnConnect: false
+  });
+
+  sock.ev.on('connection.update', (update) => {
+    const { connection, lastDisconnect, qr } = update;
+
+    if (qr) {
+      console.log('\n----------------------------------------------------');
+      console.log('📌 LEIA O QR CODE ABAIXO PARA CONECTAR SEU WHATSAPP:');
+      console.log('----------------------------------------------------');
+      const qrcode = require('qrcode-terminal');
+      qrcode.generate(qr, { small: true });
+    }
+
+    if (connection === 'close') {
+      isConnected = false;
+      writeStatus(false);
+      const shouldReconnect = (lastDisconnect?.error as Boom)?.output?.statusCode !== DisconnectReason.loggedOut;
+      console.log('[WhatsApp Bot] Conexão fechada. Reconectando: ', shouldReconnect);
+      if (shouldReconnect) {
+        connectToWhatsApp();
+      }
+    } else if (connection === 'open') {
+      console.log('✅ [WhatsApp Bot] Sessão ativa e conectada com sucesso ao WhatsApp!');
+      isConnected = true;
+      writeStatus(true);
+    }
+  });
+
+  sock.ev.on('creds.update', saveCreds);
+
+  return sock;
+}
+
+export function getWhatsAppSocket(): WASocket | null {
+  return sock;
+}
+
+export function isWhatsAppConnected(): boolean {
+  return isConnected;
+}
+
+const outboxFile = path.join(process.cwd(), 'whatsapp-outbox.json');
+
+export function startWhatsAppOutboxQueue() {
+  console.log('[WhatsApp Bot Queue] Fila de envio iniciada (verificando a cada 3s)...');
+  setInterval(async () => {
+    if (!sock || !isConnected) {
+      return;
+    }
+
+    if (!fs.existsSync(outboxFile)) {
+      return;
+    }
+
+    try {
+      const content = fs.readFileSync(outboxFile, 'utf-8');
+      const outbox: Array<{ id: string; groupJid: string; message: string; createdAt: number }> = JSON.parse(content);
+
+      if (outbox.length > 0) {
+        console.log(`[WhatsApp Bot Queue] Processando ${outbox.length} mensagem(ns) pendente(s)...`);
+        
+        // Pega a mensagem mais recente para enviar (evita flood se houver acúmulo)
+        const itemToSend = outbox[outbox.length - 1];
+
+        const success = await sendGroupMessage(itemToSend.groupJid, itemToSend.message);
+
+        if (success) {
+          // Limpa a fila após o envio bem-sucedido
+          fs.writeFileSync(outboxFile, JSON.stringify([], null, 2));
+        }
+      }
+    } catch (err) {
+      console.error('[WhatsApp Bot Queue] Erro ao ler fila de envio:', err);
+    }
+  }, 3000);
+}
+
+export async function sendGroupMessage(groupJid: string, text: string): Promise<boolean> {
+  if (!sock || !isConnected) {
+    console.warn('[WhatsApp Bot] Tentativa de envio com bot desconectado.');
+    return false;
+  }
+
+  try {
+    console.log(`[WhatsApp Bot] Enviando mensagem para o grupo ${groupJid}...`);
+    await sock.sendMessage(groupJid, { text });
+    console.log(`✅ [WhatsApp Bot] Mensagem enviada para o grupo com sucesso!`);
+    return true;
+  } catch (error) {
+    console.error(`❌ [WhatsApp Bot] Erro ao enviar mensagem para ${groupJid}:`, error);
+    return false;
+  }
+}

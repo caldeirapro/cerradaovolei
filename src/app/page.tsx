@@ -9,6 +9,7 @@ import {
   saveStoredMatchDetails,
 } from '@/utils/storage';
 import { formatWhatsAppMessage } from '@/utils/helpers';
+import { sendListWebhook } from '@/utils/webhook';
 import { MatchHeader } from '@/components/MatchHeader';
 import { AddPlayerForm } from '@/components/AddPlayerForm';
 import { PlayerList } from '@/components/PlayerList';
@@ -61,6 +62,9 @@ export default function Home() {
     setPlayers(updated);
     saveStoredPlayers(updated);
 
+    // Dispara webhook assíncrono para notificação do WhatsApp
+    sendListWebhook('player_added', updated, matchDetails, name);
+
     if (updated.length <= matchDetails.maxPlayers) {
       confetti({
         particleCount: 50,
@@ -74,6 +78,9 @@ export default function Home() {
     const updated = players.filter((p) => p.id !== id);
     setPlayers(updated);
     saveStoredPlayers(updated);
+
+    // Dispara webhook assíncrono informando remoção
+    sendListWebhook('player_removed', updated, matchDetails);
   };
 
   const handleCopyWhatsApp = () => {
@@ -95,6 +102,7 @@ export default function Home() {
     if (confirm('Tem certeza que deseja zerar a lista da semana? Todos os nomes serão removidos.')) {
       setPlayers([]);
       saveStoredPlayers([]);
+      sendListWebhook('list_reset', [], matchDetails);
     }
   };
 
