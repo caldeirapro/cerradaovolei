@@ -223,7 +223,7 @@ export const AddPlayerForm: React.FC<AddPlayerFormProps> = ({
           <input
             type="text"
             required
-            placeholder="Digite seu nome ou vários separados por vírgula (Ex: Daniel, Bruno, Pedro)"
+            placeholder="Digite seu nome (ou vários por vírgula)"
             value={name}
             onChange={(e) => {
               setName(e.target.value);
@@ -232,6 +232,9 @@ export const AddPlayerForm: React.FC<AddPlayerFormProps> = ({
             onFocus={() => setShowHistory(true)}
             className="w-full px-4 py-3 rounded-2xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent text-slate-800 font-medium"
           />
+          <p className="text-[11px] sm:text-xs text-slate-500 mt-1.5 px-1 flex items-center gap-1">
+            <span>💡 <strong>Dica:</strong> Insira vários nomes de uma vez usando vírgulas (ex: <em>Daniel, Bruno, Pedro</em>).</span>
+          </p>
 
           {/* Sugestões de Autocomplete em Dropdown com remoção individual */}
           {showHistory && nameHistory.length > 0 && name.trim().length > 0 && (
