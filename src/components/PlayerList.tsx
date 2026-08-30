@@ -15,6 +15,16 @@ export const PlayerList: React.FC<PlayerListProps> = ({
   maxPlayers,
   onRemovePlayer,
 }) => {
+  const [removingId, setRemovingId] = React.useState<string | null>(null);
+
+  const handleRemove = (id: string) => {
+    setRemovingId(id);
+    setTimeout(() => {
+      onRemovePlayer(id);
+      setRemovingId(null);
+    }, 250);
+  };
+
   const confirmedPlayers = players.slice(0, maxPlayers);
   const waitlistPlayers = players.slice(maxPlayers);
 
@@ -37,31 +47,36 @@ export const PlayerList: React.FC<PlayerListProps> = ({
           </p>
         ) : (
           <div className="divide-y divide-slate-100">
-            {confirmedPlayers.map((player, index) => (
-              <div
-                key={player.id}
-                className="py-3 flex items-center justify-between gap-3 group hover:bg-slate-50/80 px-3 rounded-xl transition-colors"
-              >
-                <div className="flex items-center gap-3 min-w-0">
-                  <span className="w-8 h-8 rounded-full bg-orange-100 text-orange-700 text-sm font-bold flex items-center justify-center shrink-0">
-                    {index + 1}
-                  </span>
-                  <p className="font-semibold text-slate-800 text-base truncate">
-                    {player.name}
-                  </p>
-                </div>
-
-                {/* Remover */}
-                <button
-                  onClick={() => onRemovePlayer(player.id)}
-                  className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-colors flex items-center gap-1 text-xs font-medium"
-                  title="Desistir / Remover da lista"
+            {confirmedPlayers.map((player, index) => {
+              const isRemoving = removingId === player.id;
+              return (
+                <div
+                  key={player.id}
+                  className={`py-3 flex items-center justify-between gap-3 group hover:bg-slate-50/80 px-3 rounded-xl transition-all duration-300 ease-in-out animate-item-add ${
+                    isRemoving ? 'opacity-0 scale-95 -translate-x-4 bg-rose-50' : 'opacity-100'
+                  }`}
                 >
-                  <Trash2 className="w-4 h-4" />
-                  <span className="hidden sm:inline">Remover</span>
-                </button>
-              </div>
-            ))}
+                  <div className="flex items-center gap-3 min-w-0">
+                    <span className="w-8 h-8 rounded-full bg-orange-100 text-orange-700 text-sm font-bold flex items-center justify-center shrink-0 transition-transform group-hover:scale-110">
+                      {index + 1}
+                    </span>
+                    <p className="font-semibold text-slate-800 text-base truncate">
+                      {player.name}
+                    </p>
+                  </div>
+
+                  {/* Remover */}
+                  <button
+                    onClick={() => handleRemove(player.id)}
+                    className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all flex items-center gap-1 text-xs font-medium active:scale-90"
+                    title="Desistir / Remover da lista"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    <span className="hidden sm:inline">Remover</span>
+                  </button>
+                </div>
+              );
+            })}
           </div>
         )}
       </div>
@@ -77,28 +92,33 @@ export const PlayerList: React.FC<PlayerListProps> = ({
           </div>
 
           <div className="divide-y divide-amber-200/40">
-            {waitlistPlayers.map((player, index) => (
-              <div
-                key={player.id}
-                className="py-3 flex items-center justify-between gap-3 px-3 rounded-xl hover:bg-amber-100/40 transition-colors"
-              >
-                <div className="flex items-center gap-3 min-w-0">
-                  <span className="w-8 h-8 rounded-full bg-amber-200 text-amber-800 text-sm font-bold flex items-center justify-center shrink-0">
-                    +{index + 1}
-                  </span>
-                  <p className="font-semibold text-amber-950 text-base truncate">{player.name}</p>
-                </div>
-
-                <button
-                  onClick={() => onRemovePlayer(player.id)}
-                  className="p-2 text-amber-600 hover:text-rose-600 hover:bg-rose-100/50 rounded-xl transition-colors flex items-center gap-1 text-xs font-medium"
-                  title="Sair da Fila"
+            {waitlistPlayers.map((player, index) => {
+              const isRemoving = removingId === player.id;
+              return (
+                <div
+                  key={player.id}
+                  className={`py-3 flex items-center justify-between gap-3 px-3 rounded-xl hover:bg-amber-100/40 transition-all duration-300 ease-in-out animate-item-add ${
+                    isRemoving ? 'opacity-0 scale-95 -translate-x-4 bg-rose-50' : 'opacity-100'
+                  }`}
                 >
-                  <Trash2 className="w-4 h-4" />
-                  <span className="hidden sm:inline">Sair da Fila</span>
-                </button>
-              </div>
-            ))}
+                  <div className="flex items-center gap-3 min-w-0">
+                    <span className="w-8 h-8 rounded-full bg-amber-200 text-amber-800 text-sm font-bold flex items-center justify-center shrink-0 transition-transform group-hover:scale-110">
+                      +{index + 1}
+                    </span>
+                    <p className="font-semibold text-amber-950 text-base truncate">{player.name}</p>
+                  </div>
+
+                  <button
+                    onClick={() => handleRemove(player.id)}
+                    className="p-2 text-amber-600 hover:text-rose-600 hover:bg-rose-100/50 rounded-xl transition-all flex items-center gap-1 text-xs font-medium active:scale-90"
+                    title="Sair da Fila"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    <span className="hidden sm:inline">Sair da Fila</span>
+                  </button>
+                </div>
+              );
+            })}
           </div>
         </div>
       )}
