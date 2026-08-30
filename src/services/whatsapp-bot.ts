@@ -104,7 +104,7 @@ export function startWhatsAppOutboxQueue() {
       if (pendingMessages && pendingMessages.length > 0) {
         const latestMessage = pendingMessages[pendingMessages.length - 1];
         const messageAgeMs = Date.now() - new Date(latestMessage.created_at).getTime();
-        const DEBOUNCE_WAIT_MS = 10000; // Aguarda 10s de silêncio após a última alteração na lista
+        const DEBOUNCE_WAIT_MS = 5000; // Aguarda 5s de silêncio após a última alteração na lista
 
         if (messageAgeMs < DEBOUNCE_WAIT_MS) {
           // Ainda está recebendo alterações em sequência, aguarda mais um pouco
