@@ -77,8 +77,10 @@ export const AddPlayerForm: React.FC<AddPlayerFormProps> = ({ onAddPlayer, maxPl
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const cleanName = sanitizePlayerName(name);
-    if (!cleanName) {
+    // Separa nomes por vírgula (,), ponto e vírgula (;) ou quebra de linha (\n)
+    const rawNames = name.split(/[,;\n]/).map((n) => n.trim()).filter((n) => n.length > 0);
+
+    if (rawNames.length === 0) {
       onShowToast(
         'Nome inválido',
         'Por favor, digite um nome válido com no mínimo 2 letras (sem aspas ou caracteres especiais).',
@@ -86,8 +88,27 @@ export const AddPlayerForm: React.FC<AddPlayerFormProps> = ({ onAddPlayer, maxPl
       );
       return;
     }
-    saveNameToHistory(cleanName);
-    onAddPlayer(cleanName);
+
+    const validNames: string[] = [];
+    for (const rawName of rawNames) {
+      const cleanName = sanitizePlayerName(rawName);
+      if (cleanName) {
+        validNames.push(cleanName);
+        saveNameToHistory(cleanName);
+      }
+    }
+
+    if (validNames.length === 0) {
+      onShowToast(
+        'Nome inválido',
+        'Por favor, digite nomes válidos com no mínimo 2 letras cada.',
+        'warning'
+      );
+      return;
+    }
+
+    // Se houver apenas 1 nome ou múltiplos, adiciona via onAddPlayer
+    validNames.forEach((validName) => onAddPlayer(validName));
     setName('');
     setShowHistory(false);
   };
@@ -187,7 +208,7 @@ export const AddPlayerForm: React.FC<AddPlayerFormProps> = ({ onAddPlayer, maxPl
           <input
             type="text"
             required
-            placeholder="Digite seu nome ou apelido (Ex: Daniel ou Convidado)"
+            placeholder="Digite seu nome ou vários separados por vírgula (Ex: Daniel, Bruno, Pedro)"
             value={name}
             onChange={(e) => {
               setName(e.target.value);
