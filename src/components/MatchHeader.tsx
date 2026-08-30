@@ -21,7 +21,7 @@ export const MatchHeader: React.FC<MatchHeaderProps> = ({ details, onUpdateDetai
   };
 
   return (
-    <div className="bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 rounded-3xl p-6 text-white shadow-xl mb-6 relative overflow-hidden">
+    <div className="bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 rounded-3xl p-4 sm:p-6 text-white shadow-xl mb-4 sm:mb-6 relative overflow-hidden">
       {/* Background Decorative Element */}
       <div className="absolute -right-10 -bottom-10 opacity-15 pointer-events-none">
         <svg width="240" height="240" viewBox="0 0 24 24" fill="currentColor">
@@ -29,18 +29,18 @@ export const MatchHeader: React.FC<MatchHeaderProps> = ({ details, onUpdateDetai
         </svg>
       </div>
 
-      <div className="flex justify-between items-start mb-4">
+      <div className="flex justify-between items-start mb-2 sm:mb-4">
         <div>
-          <span className="bg-white/20 text-white text-xs font-semibold px-3 py-1 rounded-full backdrop-blur-md">
+          <span className="bg-white/20 text-white text-[10px] sm:text-xs font-semibold px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full backdrop-blur-md">
             Próxima Partida
           </span>
-          <h1 className="text-3xl font-extrabold tracking-tight mt-2 flex items-center gap-2">
+          <h1 className="text-xl sm:text-3xl font-extrabold tracking-tight mt-1 flex items-center gap-2">
             🏐 {details.title}
           </h1>
         </div>
         <button
           onClick={() => setIsEditing(!isEditing)}
-          className="bg-white/20 hover:bg-white/30 text-white p-2 rounded-xl backdrop-blur-md transition-colors"
+          className="bg-white/20 hover:bg-white/30 text-white p-2 rounded-xl backdrop-blur-md transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
           title="Editar Informações do Jogo"
         >
           <Edit2 className="w-5 h-5" />
@@ -100,49 +100,49 @@ export const MatchHeader: React.FC<MatchHeaderProps> = ({ details, onUpdateDetai
             <button
               type="button"
               onClick={() => setIsEditing(false)}
-              className="px-4 py-2 bg-black/20 hover:bg-black/30 text-white rounded-lg text-sm font-medium flex items-center gap-1"
+              className="px-4 py-2 bg-black/20 hover:bg-black/30 text-white rounded-lg text-sm font-medium flex items-center gap-1 min-h-[44px]"
             >
               <X className="w-4 h-4" /> Cancelar
             </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-bold flex items-center gap-1 shadow-md"
+              className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-bold flex items-center gap-1 shadow-md min-h-[44px]"
             >
               <Save className="w-4 h-4" /> Salvar
             </button>
           </div>
         </form>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mt-4">
-          <div className="flex items-center gap-3 bg-white/10 p-3 rounded-2xl backdrop-blur-sm">
-            <Calendar className="w-6 h-6 text-amber-200 shrink-0" />
-            <div>
-              <p className="text-xs text-amber-100 font-medium">Data</p>
-              <p className="font-semibold text-sm">{details.date}</p>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-4 mt-2 sm:mt-4">
+          <div className="flex items-center gap-2 sm:gap-3 bg-white/10 p-2.5 sm:p-3 rounded-2xl backdrop-blur-sm">
+            <Calendar className="w-5 h-5 sm:w-6 sm:h-6 text-amber-200 shrink-0" />
+            <div className="min-w-0">
+              <p className="text-[10px] sm:text-xs text-amber-100 font-medium">Data</p>
+              <p className="font-semibold text-xs sm:text-sm truncate">{details.date}</p>
             </div>
           </div>
 
-          <div className="flex items-center gap-3 bg-white/10 p-3 rounded-2xl backdrop-blur-sm">
-            <Clock className="w-6 h-6 text-amber-200 shrink-0" />
-            <div>
-              <p className="text-xs text-amber-100 font-medium">Horário</p>
-              <p className="font-semibold text-sm">{details.time}</p>
+          <div className="flex items-center gap-2 sm:gap-3 bg-white/10 p-2.5 sm:p-3 rounded-2xl backdrop-blur-sm">
+            <Clock className="w-5 h-5 sm:w-6 sm:h-6 text-amber-200 shrink-0" />
+            <div className="min-w-0">
+              <p className="text-[10px] sm:text-xs text-amber-100 font-medium">Horário</p>
+              <p className="font-semibold text-xs sm:text-sm truncate">{details.time}</p>
             </div>
           </div>
 
-          <div className="flex items-center gap-3 bg-white/10 p-3 rounded-2xl backdrop-blur-sm">
-            <MapPin className="w-6 h-6 text-amber-200 shrink-0" />
-            <div>
-              <p className="text-xs text-amber-100 font-medium">Local</p>
-              <p className="font-semibold text-sm">{details.location}</p>
+          <div className="flex items-center gap-2 sm:gap-3 bg-white/10 p-2.5 sm:p-3 rounded-2xl backdrop-blur-sm">
+            <MapPin className="w-5 h-5 sm:w-6 sm:h-6 text-amber-200 shrink-0" />
+            <div className="min-w-0">
+              <p className="text-[10px] sm:text-xs text-amber-100 font-medium">Local</p>
+              <p className="font-semibold text-xs sm:text-sm truncate">{details.location}</p>
             </div>
           </div>
 
-          <div className="flex items-center gap-3 bg-white/10 p-3 rounded-2xl backdrop-blur-sm">
-            <Users className="w-6 h-6 text-amber-200 shrink-0" />
-            <div>
-              <p className="text-xs text-amber-100 font-medium">Vagas Ocupadas</p>
-              <p className="font-semibold text-sm">{totalConfirmed} / {details.maxPlayers} inscritos</p>
+          <div className="flex items-center gap-2 sm:gap-3 bg-white/10 p-2.5 sm:p-3 rounded-2xl backdrop-blur-sm">
+            <Users className="w-5 h-5 sm:w-6 sm:h-6 text-amber-200 shrink-0" />
+            <div className="min-w-0">
+              <p className="text-[10px] sm:text-xs text-amber-100 font-medium">Vagas</p>
+              <p className="font-semibold text-xs sm:text-sm truncate">{totalConfirmed} / {details.maxPlayers}</p>
             </div>
           </div>
         </div>
