@@ -305,7 +305,6 @@ export default function Home() {
           players={players}
           maxPlayers={matchDetails.maxPlayers}
           onRemovePlayer={handleRemovePlayer}
-          onRemovePlayers={handleRemovePlayers}
         />
 
         {/* Footer Actions */}
