@@ -82,7 +82,7 @@ export function startWhatsAppOutboxQueue() {
   }
   isQueueStarted = true;
 
-  console.log('[WhatsApp Bot Queue] Fila do Supabase iniciada (verificando a cada 3s)...');
+  console.log('[WhatsApp Bot Queue] Fila do Supabase com Debounce (15s) iniciada...');
   setInterval(async () => {
     if (!sock || !isConnected || isProcessingQueue) {
       return;
@@ -98,23 +98,30 @@ export function startWhatsAppOutboxQueue() {
         .order('created_at', { ascending: true });
 
       if (error) {
-        // Ignora silenciosamente erros de conexão pontuais
         return;
       }
 
       if (pendingMessages && pendingMessages.length > 0) {
-        console.log(`[WhatsApp Bot Queue] Encontradas ${pendingMessages.length} mensagem(ns) pendente(s) no Supabase.`);
+        const latestMessage = pendingMessages[pendingMessages.length - 1];
+        const messageAgeMs = Date.now() - new Date(latestMessage.created_at).getTime();
+        const DEBOUNCE_WAIT_MS = 15000; // Aguarda 15s de silêncio após a última alteração na lista
+
+        if (messageAgeMs < DEBOUNCE_WAIT_MS) {
+          // Ainda está recebendo alterações em sequência, aguarda mais um pouco
+          return;
+        }
+
+        console.log(`[WhatsApp Bot Queue] Processando lote de ${pendingMessages.length} alteração(ões) acumulada(s)...`);
         
-        // Pega a mensagem mais recente e marca todas pendentes anteriores como canceladas/enviadas para evitar flood
-        const itemToSend = pendingMessages[pendingMessages.length - 1];
-        
+        // Marca todas as mensagens acumuladas como enviadas
         const idsToUpdate = pendingMessages.map((m: any) => m.id);
         await supabase
           .from('whatsapp_outbox')
           .update({ status: 'sent' })
           .in('id', idsToUpdate);
 
-        await sendGroupMessage(itemToSend.group_jid, itemToSend.message);
+        // Envia apenas a última mensagem consolidada com a lista final perfeita
+        await sendGroupMessage(latestMessage.group_jid, latestMessage.message);
       }
     } catch (err) {
       console.error('[WhatsApp Bot Queue] Erro ao processar fila do Supabase:', err);

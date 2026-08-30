@@ -170,6 +170,19 @@ export default function Home() {
     showToast('Nome removido', 'Jogador removido da lista.', 'info');
   };
 
+  const handleRemovePlayers = async (ids: string[]) => {
+    if (!ids || ids.length === 0) return;
+    const idsSet = new Set(ids);
+    const currentLatestPlayers = await getStoredPlayers();
+    const updated = currentLatestPlayers.filter((p) => !idsSet.has(p.id));
+    setPlayers(updated);
+    await saveStoredPlayers(updated);
+
+    // Dispara 1 ÚNICO webhook para o lote de remoções
+    sendListWebhook('player_removed', updated, matchDetails);
+    showToast('Remoção em lote', `${ids.length} jogador(es) removido(s) da lista.`, 'info');
+  };
+
   const handleCopyWhatsApp = () => {
     if (players.length === 0) {
       showToast('Lista Vazia', 'Não há nenhum jogador confirmado na lista para copiar.', 'warning');
@@ -292,6 +305,7 @@ export default function Home() {
           players={players}
           maxPlayers={matchDetails.maxPlayers}
           onRemovePlayer={handleRemovePlayer}
+          onRemovePlayers={handleRemovePlayers}
         />
 
         {/* Footer Actions */}
