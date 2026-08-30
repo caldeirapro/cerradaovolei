@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { MatchDetails } from '@/types';
 import { Calendar, Clock, MapPin, Edit2, Save, X, Users } from 'lucide-react';
 
@@ -13,6 +13,17 @@ interface MatchHeaderProps {
 export const MatchHeader: React.FC<MatchHeaderProps> = ({ details, onUpdateDetails, totalConfirmed }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState<MatchDetails>(details);
+
+  useEffect(() => {
+    setFormData(details);
+  }, [details]);
+
+  const handleToggleEdit = () => {
+    if (!isEditing) {
+      setFormData(details);
+    }
+    setIsEditing(!isEditing);
+  };
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,7 +50,7 @@ export const MatchHeader: React.FC<MatchHeaderProps> = ({ details, onUpdateDetai
           </h1>
         </div>
         <button
-          onClick={() => setIsEditing(!isEditing)}
+          onClick={handleToggleEdit}
           className="bg-white/20 hover:bg-white/30 text-white p-2 rounded-xl backdrop-blur-md transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
           title="Editar Informações do Jogo"
         >
