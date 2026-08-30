@@ -86,21 +86,25 @@ export async function POST(request: Request) {
       });
     }
 
-    // 5. Insere a mensagem na fila do WhatsApp
-    const { error: outboxError } = await supabase.from('whatsapp_outbox').insert([
-      {
-        group_jid: groupJid,
-        message: decodedMessage,
-        status: 'pending',
-      },
-    ]);
+    // 5. Insere a mensagem na fila do WhatsApp APENAS se houver ao menos 1 jogador na lista!
+    if (Array.isArray(sanitizedPlayers) && sanitizedPlayers.length > 0) {
+      const { error: outboxError } = await supabase.from('whatsapp_outbox').insert([
+        {
+          group_jid: groupJid,
+          message: decodedMessage,
+          status: 'pending',
+        },
+      ]);
 
-    if (outboxError) {
-      console.error('[API Webhook Outbox Error]:', outboxError);
-      return NextResponse.json({ error: outboxError.message }, { status: 500 });
+      if (outboxError) {
+        console.error('[API Webhook Outbox Error]:', outboxError);
+        return NextResponse.json({ error: outboxError.message }, { status: 500 });
+      }
+    } else {
+      console.log('[API Webhook]: Lista vazia. Envio para o WhatsApp ignorado.');
     }
 
-    return NextResponse.json({ success: true, message: 'State updated and queued for WhatsApp delivery' });
+    return NextResponse.json({ success: true, message: 'State updated successfully' });
   } catch (error: any) {
     console.error('[API Webhook Error]:', error);
     return NextResponse.json({ error: error.message || 'Internal Error' }, { status: 500 });

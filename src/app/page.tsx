@@ -146,6 +146,10 @@ export default function Home() {
   };
 
   const handleCopyWhatsApp = () => {
+    if (players.length === 0) {
+      showToast('Lista Vazia', 'Não há nenhum jogador confirmado na lista para copiar.', 'warning');
+      return;
+    }
     const text = formatWhatsAppMessage(matchDetails, players);
     navigator.clipboard.writeText(text);
     setCopiedWhatsApp(true);
@@ -154,6 +158,10 @@ export default function Home() {
   };
 
   const handleSendWhatsApp = () => {
+    if (players.length === 0) {
+      showToast('Lista Vazia', 'Não há nenhum jogador confirmado na lista para enviar ao WhatsApp.', 'warning');
+      return;
+    }
     const text = formatWhatsAppMessage(matchDetails, players);
     const encodedText = encodeURIComponent(text);
     // WhatsApp Universal Link - abre a tela de seleção de conversa ou grupo
