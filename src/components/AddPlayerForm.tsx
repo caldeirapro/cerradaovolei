@@ -157,7 +157,7 @@ export const AddPlayerForm: React.FC<AddPlayerFormProps> = ({
       {(myMainName || nameHistory.length > 0) && (
         <div className="mb-3 flex flex-wrap items-center gap-2">
           <span className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
-            <Zap className="w-3.5 h-3.5 text-amber-500 fill-amber-500" /> Atalhos:
+            <Zap className="w-3.5 h-3.5 text-amber-500 fill-amber-500" /> 1 clique para entrar:
           </span>
 
           {myMainName && (
@@ -166,10 +166,10 @@ export const AddPlayerForm: React.FC<AddPlayerFormProps> = ({
                 type="button"
                 onClick={() => handleQuickInsert(myMainName)}
                 className="px-3 py-1.5 hover:bg-orange-200 transition-all flex items-center gap-1.5 active:scale-95"
-                title="Inserir meu nome principal"
+                title="Adicionar meu nome imediatamente à lista"
               >
                 <UserCheck className="w-3.5 h-3.5 text-orange-600" />
-                <span>⚡ {myMainName} (Eu)</span>
+                <span>+ Adicionar {myMainName} (Eu)</span>
               </button>
               <button
                 type="button"
@@ -193,8 +193,9 @@ export const AddPlayerForm: React.FC<AddPlayerFormProps> = ({
                   type="button"
                   onClick={() => handleQuickInsert(histName)}
                   className="px-3 py-1.5 hover:bg-slate-200 transition-all active:scale-95"
+                  title={`Adicionar "${histName}" imediatamente à lista`}
                 >
-                  {histName}
+                  + {histName}
                 </button>
                 <button
                   type="button"
