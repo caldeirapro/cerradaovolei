@@ -15,6 +15,7 @@ import { MatchHeader } from '@/components/MatchHeader';
 import { AddPlayerForm } from '@/components/AddPlayerForm';
 import { PlayerList } from '@/components/PlayerList';
 import { TeamDrawModal } from '@/components/TeamDrawModal';
+import { NotificationModal, ToastConfig, ConfirmModalConfig } from '@/components/NotificationModal';
 import { Share2, Shuffle, RefreshCw, CheckCircle } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
@@ -74,6 +75,17 @@ export default function Home() {
     }
   }, []);
 
+  const [toast, setToast] = useState<ToastConfig | null>(null);
+  const [confirmModal, setConfirmModal] = useState<ConfirmModalConfig | null>(null);
+
+  const showToast = (title: string, message: string, type: 'warning' | 'error' | 'info' | 'success' = 'info') => {
+    const id = Date.now().toString();
+    setToast({ id, title, message, type });
+    setTimeout(() => {
+      setToast((current) => (current?.id === id ? null : current));
+    }, 4000);
+  };
+
   const handleUpdateMatchDetails = (newDetails: MatchDetails) => {
     setMatchDetails(newDetails);
     saveStoredMatchDetails(newDetails);
@@ -92,7 +104,7 @@ export default function Home() {
     );
 
     if (alreadyExists) {
-      alert(`O nome "${cleanName}" já está na lista!`);
+      showToast('Nome em duplicidade', `O nome "${cleanName}" já está na lista!`, 'warning');
       return;
     }
 
@@ -115,6 +127,9 @@ export default function Home() {
         spread: 60,
         origin: { y: 0.8 },
       });
+      showToast('Vaga garantida! 🏐', `${cleanName} foi adicionado(a) com sucesso.`, 'success');
+    } else {
+      showToast('Fila de Espera', `${cleanName} entrou na fila de espera.`, 'warning');
     }
   };
 
@@ -127,12 +142,14 @@ export default function Home() {
 
     // Dispara webhook assíncrono informando remoção
     sendListWebhook('player_removed', updated, matchDetails);
+    showToast('Nome removido', 'Jogador removido da lista.', 'info');
   };
 
   const handleCopyWhatsApp = () => {
     const text = formatWhatsAppMessage(matchDetails, players);
     navigator.clipboard.writeText(text);
     setCopiedWhatsApp(true);
+    showToast('Copiado!', 'Lista formatada copiada para a área de transferência.', 'success');
     setTimeout(() => setCopiedWhatsApp(false), 2500);
   };
 
@@ -145,11 +162,19 @@ export default function Home() {
   };
 
   const handleResetList = () => {
-    if (confirm('Tem certeza que deseja zerar a lista da semana? Todos os nomes serão removidos.')) {
-      setPlayers([]);
-      saveStoredPlayers([]);
-      sendListWebhook('list_reset', [], matchDetails);
-    }
+    setConfirmModal({
+      isOpen: true,
+      title: 'Resetar Lista Semanal?',
+      message: 'Tem certeza que deseja zerar a lista da semana? Todos os nomes serão removidos permanentemente.',
+      onConfirm: () => {
+        setPlayers([]);
+        saveStoredPlayers([]);
+        sendListWebhook('list_reset', [], matchDetails);
+        setConfirmModal(null);
+        showToast('Lista zerada', 'Todos os jogadores foram removidos.', 'info');
+      },
+      onCancel: () => setConfirmModal(null),
+    });
   };
 
   const confirmedCount = Math.min(players.length, matchDetails.maxPlayers);
@@ -213,6 +238,7 @@ export default function Home() {
           onAddPlayer={handleAddPlayer}
           maxPlayers={matchDetails.maxPlayers}
           currentCount={players.length}
+          onShowToast={showToast}
         />
 
         <PlayerList
@@ -238,6 +264,12 @@ export default function Home() {
         maxPlayers={matchDetails.maxPlayers}
         isOpen={isTeamModalOpen}
         onClose={() => setIsTeamModalOpen(false)}
+      />
+
+      <NotificationModal
+        toast={toast}
+        onCloseToast={() => setToast(null)}
+        confirmModal={confirmModal}
       />
     </main>
   );

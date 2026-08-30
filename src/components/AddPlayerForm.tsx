@@ -8,9 +8,10 @@ interface AddPlayerFormProps {
   onAddPlayer: (name: string) => void;
   maxPlayers: number;
   currentCount: number;
+  onShowToast: (title: string, message: string, type?: 'warning' | 'error' | 'info' | 'success') => void;
 }
 
-export const AddPlayerForm: React.FC<AddPlayerFormProps> = ({ onAddPlayer, maxPlayers, currentCount }) => {
+export const AddPlayerForm: React.FC<AddPlayerFormProps> = ({ onAddPlayer, maxPlayers, currentCount, onShowToast }) => {
   const [name, setName] = useState('');
   const [myMainName, setMyMainName] = useState<string>('');
   const [nameHistory, setNameHistory] = useState<string[]>([]);
@@ -78,7 +79,11 @@ export const AddPlayerForm: React.FC<AddPlayerFormProps> = ({ onAddPlayer, maxPl
     e.preventDefault();
     const cleanName = sanitizePlayerName(name);
     if (!cleanName) {
-      alert('Por favor, digite um nome válido com no mínimo 2 letras (sem aspas ou caracteres especiais).');
+      onShowToast(
+        'Nome inválido',
+        'Por favor, digite um nome válido com no mínimo 2 letras (sem aspas ou caracteres especiais).',
+        'warning'
+      );
       return;
     }
     saveNameToHistory(cleanName);
