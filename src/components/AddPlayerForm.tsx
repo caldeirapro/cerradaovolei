@@ -233,7 +233,7 @@ export const AddPlayerForm: React.FC<AddPlayerFormProps> = ({
             className="w-full px-4 py-3 rounded-2xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent text-slate-800 font-medium"
           />
           <p className="text-[11px] sm:text-xs text-slate-500 mt-1.5 px-1 flex items-center gap-1">
-            <span>💡 <strong>Dica:</strong> Insira vários nomes de uma vez usando vírgulas (ex: <em>Daniel, Bruno, Pedro</em>).</span>
+            <span>💡 <strong>Dica:</strong> Insira vários nomes de uma vez usando vírgulas (ex: <em>Daniel, Acsa, Adão</em>).</span>
           </p>
 
           {/* Sugestões de Autocomplete em Dropdown com remoção individual */}
