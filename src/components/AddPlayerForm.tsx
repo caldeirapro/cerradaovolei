@@ -236,12 +236,13 @@ export const AddPlayerForm: React.FC<AddPlayerFormProps> = ({
                 setShowHistory(true);
               }}
               onFocus={() => setShowHistory(true)}
+              onBlur={() => setTimeout(() => setShowHistory(false), 200)}
               className="w-full px-4 py-3 rounded-2xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent text-slate-800 font-medium"
             />
 
-            {/* Sugestões de Autocomplete em Dropdown com remoção individual */}
+            {/* Sugestões de Autocomplete em Dropdown com remoção individual (Abre acima no celular para não cobrir o botão) */}
             {showHistory && filteredHistory.length > 0 && (
-              <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-2xl shadow-xl z-50 overflow-hidden divide-y divide-slate-100">
+              <div className="absolute bottom-full mb-1 sm:bottom-auto sm:top-full sm:mb-0 sm:mt-1 left-0 right-0 bg-white border border-slate-200 rounded-2xl shadow-2xl z-50 overflow-hidden divide-y divide-slate-100">
                 <div className="p-2 bg-slate-50 text-[11px] font-bold text-slate-400 uppercase tracking-wider flex justify-between items-center">
                   <span>Nomes salvos anteriormente</span>
                   <button
@@ -259,6 +260,7 @@ export const AddPlayerForm: React.FC<AddPlayerFormProps> = ({
                   >
                     <button
                       type="button"
+                      onMouseDown={(e) => e.preventDefault()} // Evita acionar o onBlur antes do clique
                       onClick={() => handleQuickInsert(suggestedName)}
                       className="flex-1 text-left py-1 text-sm font-medium text-slate-700 group-hover:text-orange-700 flex items-center justify-between mr-2"
                     >
@@ -271,6 +273,7 @@ export const AddPlayerForm: React.FC<AddPlayerFormProps> = ({
                     </button>
                     <button
                       type="button"
+                      onMouseDown={(e) => e.preventDefault()}
                       onClick={(e) => handleRemoveSingleHistoryName(suggestedName, e)}
                       className="text-slate-300 hover:text-rose-600 p-1 rounded-md transition-colors"
                       title="Apagar este nome do histórico"
