@@ -5,11 +5,18 @@ import { Player, MatchDetails, Team } from '@/types';
  */
 export function sanitizePlayerName(name: string): string {
   if (!name) return '';
-  return name
+  const cleaned = name
     .replace(/[\r\n\t]+/g, ' ') // Remove quebras de linha e tabulações
-    .replace(/[*_~`@]/g, '') // Remove caracteres de formatação do WhatsApp e menções
+    .replace(/['"`*_~`@#$%^&*()=+[\]{}|\\:<>/]/g, '') // Remove aspas, símbolos e caracteres especiais
     .replace(/\s+/g, ' ') // Normaliza múltiplos espaços em apenas um
     .trim();
+
+  // Exige no mínimo 2 caracteres válidos
+  if (cleaned.length < 2) {
+    return '';
+  }
+
+  return cleaned;
 }
 
 export function formatWhatsAppMessage(details: MatchDetails, players: Player[]): string {

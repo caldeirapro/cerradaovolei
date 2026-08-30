@@ -39,6 +39,7 @@ export async function sendListWebhook(
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'x-webhook-secret': process.env.WEBHOOK_SECRET || 'CerradaoVolei_SecuredSecret_987456123852000!@#$%',
       },
       body: JSON.stringify(payload),
     });

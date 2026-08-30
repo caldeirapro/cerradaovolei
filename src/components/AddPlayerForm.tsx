@@ -77,7 +77,10 @@ export const AddPlayerForm: React.FC<AddPlayerFormProps> = ({ onAddPlayer, maxPl
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const cleanName = sanitizePlayerName(name);
-    if (!cleanName) return;
+    if (!cleanName) {
+      alert('Por favor, digite um nome válido com no mínimo 2 letras (sem aspas ou caracteres especiais).');
+      return;
+    }
     saveNameToHistory(cleanName);
     onAddPlayer(cleanName);
     setName('');
