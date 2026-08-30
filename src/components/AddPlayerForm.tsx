@@ -5,13 +5,13 @@ import { UserPlus, UserCheck, Zap, X, Trash2 } from 'lucide-react';
 import { sanitizePlayerName } from '@/utils/helpers';
 
 interface AddPlayerFormProps {
-  onAddPlayer: (name: string) => void;
+  onAddPlayers: (names: string[]) => void;
   maxPlayers: number;
   currentCount: number;
   onShowToast: (title: string, message: string, type?: 'warning' | 'error' | 'info' | 'success') => void;
 }
 
-export const AddPlayerForm: React.FC<AddPlayerFormProps> = ({ onAddPlayer, maxPlayers, currentCount, onShowToast }) => {
+export const AddPlayerForm: React.FC<AddPlayerFormProps> = ({ onAddPlayers, maxPlayers, currentCount, onShowToast }) => {
   const [name, setName] = useState('');
   const [myMainName, setMyMainName] = useState<string>('');
   const [nameHistory, setNameHistory] = useState<string[]>([]);
@@ -33,14 +33,12 @@ export const AddPlayerForm: React.FC<AddPlayerFormProps> = ({ onAddPlayer, maxPl
     }
   }, []);
 
-  const saveNameToHistory = (enteredName: string) => {
+  const saveNameToHistory = (enteredName: string, isMain: boolean = true) => {
     if (typeof window === 'undefined' || !enteredName.trim()) return;
     const cleanName = enteredName.trim();
 
-    // Se for o primeiro nome cadastrado no aparelho, define como nome principal
-    let newMain = myMainName;
-    if (!myMainName) {
-      newMain = cleanName;
+    // Se for o primeiro nome cadastrado no aparelho e isMain for true, define como nome principal
+    if (isMain && !myMainName) {
       setMyMainName(cleanName);
       localStorage.setItem('cerradao_user_main_name', cleanName);
     }
@@ -94,7 +92,6 @@ export const AddPlayerForm: React.FC<AddPlayerFormProps> = ({ onAddPlayer, maxPl
       const cleanName = sanitizePlayerName(rawName);
       if (cleanName) {
         validNames.push(cleanName);
-        saveNameToHistory(cleanName);
       }
     }
 
@@ -107,8 +104,14 @@ export const AddPlayerForm: React.FC<AddPlayerFormProps> = ({ onAddPlayer, maxPl
       return;
     }
 
-    // Se houver apenas 1 nome ou múltiplos, adiciona via onAddPlayer
-    validNames.forEach((validName) => onAddPlayer(validName));
+    // Salva apenas o PRIMEIRO nome inserido como o nome principal do atalho "Eu", e salva os demais no histórico
+    saveNameToHistory(validNames[0]);
+    validNames.slice(1).forEach((otherName) => {
+      saveNameToHistory(otherName, false); // Não substitui o nome principal com o nome de acompanhantes
+    });
+
+    // Envia todos os nomes de uma só vez para inserção atômica
+    onAddPlayers(validNames);
     setName('');
     setShowHistory(false);
   };
@@ -117,7 +120,7 @@ export const AddPlayerForm: React.FC<AddPlayerFormProps> = ({ onAddPlayer, maxPl
     const cleanName = sanitizePlayerName(selectedName);
     if (!cleanName) return;
     saveNameToHistory(cleanName);
-    onAddPlayer(cleanName);
+    onAddPlayers([cleanName]);
     setName('');
     setShowHistory(false);
   };

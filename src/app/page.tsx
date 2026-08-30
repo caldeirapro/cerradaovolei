@@ -91,45 +91,70 @@ export default function Home() {
     saveStoredMatchDetails(newDetails);
   };
 
-  const handleAddPlayer = async (name: string) => {
-    const cleanName = sanitizePlayerName(name);
-    if (!cleanName) return;
+  const handleAddPlayers = async (names: string[]) => {
+    if (!names || names.length === 0) return;
 
-    // Busca o estado mais recente do banco para evitar sobrescrever inserções simultâneas de outros usuários
+    // Busca o estado mais recente do banco de dados para evitar sobrescrever inserções paralelas
     const currentLatestPlayers = await getStoredPlayers();
 
-    // Bloqueia adição se o nome já estiver exatamente na lista
-    const alreadyExists = currentLatestPlayers.some(
-      (p) => p.name.toLowerCase() === cleanName.toLowerCase()
-    );
+    const existingNamesSet = new Set(currentLatestPlayers.map((p) => p.name.toLowerCase()));
+    const newPlayersToAdd: Player[] = [];
+    const addedNamesList: string[] = [];
+    const duplicatedNamesList: string[] = [];
 
-    if (alreadyExists) {
-      showToast('Nome em duplicidade', `O nome "${cleanName}" já está na lista!`, 'warning');
+    names.forEach((rawName, idx) => {
+      const cleanName = sanitizePlayerName(rawName);
+      if (!cleanName) return;
+
+      if (existingNamesSet.has(cleanName.toLowerCase())) {
+        duplicatedNamesList.push(cleanName);
+      } else {
+        existingNamesSet.add(cleanName.toLowerCase());
+        addedNamesList.push(cleanName);
+        newPlayersToAdd.push({
+          id: `${Date.now()}_${idx}_${Math.random().toString(36).substring(2, 7)}`,
+          name: cleanName,
+          registeredAt: new Date().toISOString(),
+        });
+      }
+    });
+
+    if (duplicatedNamesList.length > 0) {
+      showToast(
+        'Nome(s) em duplicidade',
+        `Ignorado(s) por já estarem na lista: ${duplicatedNamesList.join(', ')}`,
+        'warning'
+      );
+    }
+
+    if (newPlayersToAdd.length === 0) {
       return;
     }
 
-    const newPlayer: Player = {
-      id: `${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
-      name: cleanName,
-      registeredAt: new Date().toISOString(),
-    };
-
-    const updated = [...currentLatestPlayers, newPlayer];
+    const updated = [...currentLatestPlayers, ...newPlayersToAdd];
     setPlayers(updated);
     await saveStoredPlayers(updated);
 
-    // Dispara webhook assíncrono para notificação do WhatsApp
-    sendListWebhook('player_added', updated, matchDetails, cleanName);
+    // Dispara 1 ÚNICO webhook com a lista completa contendo todos os novos jogadores inseridos!
+    sendListWebhook('player_added', updated, matchDetails, addedNamesList.join(', '));
 
     if (updated.length <= matchDetails.maxPlayers) {
       confetti({
-        particleCount: 50,
-        spread: 60,
+        particleCount: 60,
+        spread: 70,
         origin: { y: 0.8 },
       });
-      showToast('Vaga garantida! 🏐', `${cleanName} foi adicionado(a) com sucesso.`, 'success');
+      showToast(
+        'Vaga(s) garantida(s)! 🏐',
+        `${addedNamesList.join(', ')} adicionado(s) com sucesso.`,
+        'success'
+      );
     } else {
-      showToast('Fila de Espera', `${cleanName} entrou na fila de espera.`, 'warning');
+      showToast(
+        'Lista Atualizada',
+        `${addedNamesList.length} jogador(es) adicionado(s) à lista / fila de espera.`,
+        'info'
+      );
     }
   };
 
@@ -243,7 +268,7 @@ export default function Home() {
         />
 
         <AddPlayerForm
-          onAddPlayer={handleAddPlayer}
+          onAddPlayers={handleAddPlayers}
           maxPlayers={matchDetails.maxPlayers}
           currentCount={players.length}
           onShowToast={showToast}
