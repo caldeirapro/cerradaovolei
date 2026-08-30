@@ -139,6 +139,10 @@ export const AddPlayerForm: React.FC<AddPlayerFormProps> = ({
 
   const isWaitlist = currentCount >= maxPlayers;
 
+  const filteredHistory = nameHistory.filter(
+    (n) => name.trim().length > 0 && n.toLowerCase().includes(name.trim().toLowerCase())
+  );
+
   return (
     <div className="bg-white rounded-3xl p-6 shadow-md border border-slate-100 mb-6 relative">
       <div className="flex items-center justify-between mb-3">
@@ -220,39 +224,35 @@ export const AddPlayerForm: React.FC<AddPlayerFormProps> = ({
       )}
 
       <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3 relative">
-        <div className="flex-1 relative">
-          <input
-            type="text"
-            required
-            placeholder="Digite seu nome (ou vários por vírgula)"
-            value={name}
-            onChange={(e) => {
-              setName(e.target.value);
-              setShowHistory(true);
-            }}
-            onFocus={() => setShowHistory(true)}
-            className="w-full px-4 py-3 rounded-2xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent text-slate-800 font-medium"
-          />
-          <p className="text-[11px] sm:text-xs text-slate-500 mt-1.5 px-1 flex items-center gap-1">
-            <span>💡 <strong>Dica:</strong> Insira vários nomes de uma vez usando vírgulas (ex: <em>Daniel, Acsa, Adão</em>).</span>
-          </p>
+        <div className="flex-1">
+          <div className="relative">
+            <input
+              type="text"
+              required
+              placeholder="Digite seu nome (ou vários por vírgula)"
+              value={name}
+              onChange={(e) => {
+                setName(e.target.value);
+                setShowHistory(true);
+              }}
+              onFocus={() => setShowHistory(true)}
+              className="w-full px-4 py-3 rounded-2xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent text-slate-800 font-medium"
+            />
 
-          {/* Sugestões de Autocomplete em Dropdown com remoção individual */}
-          {showHistory && nameHistory.length > 0 && name.trim().length > 0 && (
-            <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-2xl shadow-xl z-30 overflow-hidden divide-y divide-slate-100">
-              <div className="p-2 bg-slate-50 text-[11px] font-bold text-slate-400 uppercase tracking-wider flex justify-between items-center">
-                <span>Nomes salvos anteriormente</span>
-                <button
-                  type="button"
-                  onClick={() => setShowHistory(false)}
-                  className="text-slate-400 hover:text-slate-600 p-0.5"
-                >
-                  <X className="w-3.5 h-3.5" />
-                </button>
-              </div>
-              {nameHistory
-                .filter((n) => n.toLowerCase().includes(name.toLowerCase()))
-                .map((suggestedName) => (
+            {/* Sugestões de Autocomplete em Dropdown com remoção individual */}
+            {showHistory && filteredHistory.length > 0 && (
+              <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-2xl shadow-xl z-50 overflow-hidden divide-y divide-slate-100">
+                <div className="p-2 bg-slate-50 text-[11px] font-bold text-slate-400 uppercase tracking-wider flex justify-between items-center">
+                  <span>Nomes salvos anteriormente</span>
+                  <button
+                    type="button"
+                    onClick={() => setShowHistory(false)}
+                    className="text-slate-400 hover:text-slate-600 p-0.5"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+                {filteredHistory.map((suggestedName) => (
                   <div
                     key={suggestedName}
                     className="w-full flex items-center justify-between px-4 py-2 hover:bg-orange-50 group"
@@ -279,8 +279,13 @@ export const AddPlayerForm: React.FC<AddPlayerFormProps> = ({
                     </button>
                   </div>
                 ))}
-            </div>
-          )}
+              </div>
+            )}
+          </div>
+
+          <p className="text-[11px] sm:text-xs text-slate-500 mt-1.5 px-1 flex items-center gap-1">
+            <span>💡 <strong>Dica:</strong> Insira vários nomes de uma vez usando vírgulas (ex: <em>Daniel, Acsa, Adão</em>).</span>
+          </p>
         </div>
 
         <button
