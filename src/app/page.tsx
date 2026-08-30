@@ -8,7 +8,7 @@ import {
   getStoredMatchDetails,
   saveStoredMatchDetails,
 } from '@/utils/storage';
-import { formatWhatsAppMessage } from '@/utils/helpers';
+import { formatWhatsAppMessage, sanitizePlayerName } from '@/utils/helpers';
 import { sendListWebhook } from '@/utils/webhook';
 import { supabase } from '@/lib/supabase';
 import { MatchHeader } from '@/components/MatchHeader';
@@ -79,19 +79,25 @@ export default function Home() {
     saveStoredMatchDetails(newDetails);
   };
 
-  const handleAddPlayer = (name: string) => {
+  const handleAddPlayer = async (name: string) => {
+    const cleanName = sanitizePlayerName(name);
+    if (!cleanName) return;
+
+    // Busca o estado mais recente do banco para evitar sobrescrever inserções simultâneas de outros usuários
+    const currentLatestPlayers = await getStoredPlayers();
+
     const newPlayer: Player = {
-      id: Date.now().toString(),
-      name,
+      id: `${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+      name: cleanName,
       registeredAt: new Date().toISOString(),
     };
 
-    const updated = [...players, newPlayer];
+    const updated = [...currentLatestPlayers, newPlayer];
     setPlayers(updated);
-    saveStoredPlayers(updated);
+    await saveStoredPlayers(updated);
 
     // Dispara webhook assíncrono para notificação do WhatsApp
-    sendListWebhook('player_added', updated, matchDetails, name);
+    sendListWebhook('player_added', updated, matchDetails, cleanName);
 
     if (updated.length <= matchDetails.maxPlayers) {
       confetti({
@@ -102,10 +108,12 @@ export default function Home() {
     }
   };
 
-  const handleRemovePlayer = (id: string) => {
-    const updated = players.filter((p) => p.id !== id);
+  const handleRemovePlayer = async (id: string) => {
+    // Busca a versão mais atualizada do banco antes de filtrar para evitar perdas concorrentes
+    const currentLatestPlayers = await getStoredPlayers();
+    const updated = currentLatestPlayers.filter((p) => p.id !== id);
     setPlayers(updated);
-    saveStoredPlayers(updated);
+    await saveStoredPlayers(updated);
 
     // Dispara webhook assíncrono informando remoção
     sendListWebhook('player_removed', updated, matchDetails);

@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { UserPlus, UserCheck, Zap, X, Trash2 } from 'lucide-react';
+import { sanitizePlayerName } from '@/utils/helpers';
 
 interface AddPlayerFormProps {
   onAddPlayer: (name: string) => void;
@@ -75,17 +76,19 @@ export const AddPlayerForm: React.FC<AddPlayerFormProps> = ({ onAddPlayer, maxPl
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim()) return;
-    saveNameToHistory(name);
-    onAddPlayer(name.trim());
+    const cleanName = sanitizePlayerName(name);
+    if (!cleanName) return;
+    saveNameToHistory(cleanName);
+    onAddPlayer(cleanName);
     setName('');
     setShowHistory(false);
   };
 
   const handleQuickInsert = (selectedName: string) => {
-    if (!selectedName.trim()) return;
-    saveNameToHistory(selectedName);
-    onAddPlayer(selectedName.trim());
+    const cleanName = sanitizePlayerName(selectedName);
+    if (!cleanName) return;
+    saveNameToHistory(cleanName);
+    onAddPlayer(cleanName);
     setName('');
     setShowHistory(false);
   };

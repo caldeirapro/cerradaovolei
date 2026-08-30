@@ -1,23 +1,38 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
+import { sanitizePlayerName } from '@/utils/helpers';
 
 export async function POST(request: Request) {
   try {
+    // 1. Validação de Segurança (Secret Token / Origin Check)
+    const webhookSecret = process.env.WEBHOOK_SECRET;
+    const providedSecret = request.headers.get('x-webhook-secret');
+
+    if (webhookSecret && providedSecret !== webhookSecret) {
+      return NextResponse.json({ error: 'Unauthorized webhook call' }, { status: 401 });
+    }
+
     const body = await request.json();
     const { formattedMessage, players, matchDetails } = body;
 
-    if (!formattedMessage) {
-      return NextResponse.json({ error: 'formattedMessage is required' }, { status: 400 });
+    if (!formattedMessage || typeof formattedMessage !== 'string') {
+      return NextResponse.json({ error: 'Valid formattedMessage string is required' }, { status: 400 });
     }
 
     const decodedMessage = decodeURIComponent(formattedMessage);
     const groupJid = process.env.WHATSAPP_GROUP_JID || '120363413913766840@g.us';
 
-    // 1. Atualiza o estado dos jogadores no Supabase pelo servidor
-    if (players && Array.isArray(players)) {
+    // 2. Sanitiza os nomes de todos os jogadores antes de persistir no banco
+    let sanitizedPlayers = players;
+    if (Array.isArray(players)) {
+      sanitizedPlayers = players.map((p: any) => ({
+        ...p,
+        name: sanitizePlayerName(p.name || ''),
+      })).filter((p: any) => p.name.length > 0);
+
       await supabase.from('cerradao_state').upsert({
         key: 'players',
-        data: players,
+        data: sanitizedPlayers,
         updated_at: new Date().toISOString(),
       });
     }

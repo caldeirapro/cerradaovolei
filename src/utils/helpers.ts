@@ -1,5 +1,17 @@
 import { Player, MatchDetails, Team } from '@/types';
 
+/**
+ * Sanitizes player names by removing line breaks, formatting characters (*, _, ~, `), and control characters
+ */
+export function sanitizePlayerName(name: string): string {
+  if (!name) return '';
+  return name
+    .replace(/[\r\n\t]+/g, ' ') // Remove quebras de linha e tabulações
+    .replace(/[*_~`@]/g, '') // Remove caracteres de formatação do WhatsApp e menções
+    .replace(/\s+/g, ' ') // Normaliza múltiplos espaços em apenas um
+    .trim();
+}
+
 export function formatWhatsAppMessage(details: MatchDetails, players: Player[]): string {
   const mainPlayers = players.slice(0, details.maxPlayers);
   const waitlistPlayers = players.slice(details.maxPlayers);
