@@ -210,6 +210,19 @@ export default function Home() {
     });
   };
 
+  const showConfirmModal = (title: string, message: string, onConfirm: () => void) => {
+    setConfirmModal({
+      isOpen: true,
+      title,
+      message,
+      onConfirm: () => {
+        onConfirm();
+        setConfirmModal(null);
+      },
+      onCancel: () => setConfirmModal(null),
+    });
+  };
+
   const confirmedCount = Math.min(players.length, matchDetails.maxPlayers);
 
   return (
@@ -272,6 +285,7 @@ export default function Home() {
           maxPlayers={matchDetails.maxPlayers}
           currentCount={players.length}
           onShowToast={showToast}
+          onShowConfirmModal={showConfirmModal}
         />
 
         <PlayerList

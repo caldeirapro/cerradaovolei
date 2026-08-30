@@ -9,9 +9,16 @@ interface AddPlayerFormProps {
   maxPlayers: number;
   currentCount: number;
   onShowToast: (title: string, message: string, type?: 'warning' | 'error' | 'info' | 'success') => void;
+  onShowConfirmModal: (title: string, message: string, onConfirm: () => void) => void;
 }
 
-export const AddPlayerForm: React.FC<AddPlayerFormProps> = ({ onAddPlayers, maxPlayers, currentCount, onShowToast }) => {
+export const AddPlayerForm: React.FC<AddPlayerFormProps> = ({
+  onAddPlayers,
+  maxPlayers,
+  currentCount,
+  onShowToast,
+  onShowConfirmModal,
+}) => {
   const [name, setName] = useState('');
   const [myMainName, setMyMainName] = useState<string>('');
   const [nameHistory, setNameHistory] = useState<string[]>([]);
@@ -65,12 +72,17 @@ export const AddPlayerForm: React.FC<AddPlayerFormProps> = ({ onAddPlayers, maxP
   };
 
   const handleClearAllSavedNames = () => {
-    if (confirm('Deseja limpar todos os nomes salvos nos seus atalhos?')) {
-      setMyMainName('');
-      setNameHistory([]);
-      localStorage.removeItem('cerradao_user_main_name');
-      localStorage.removeItem('cerradao_user_name_history');
-    }
+    onShowConfirmModal(
+      'Limpar Atalhos?',
+      'Deseja limpar todos os nomes salvos nos seus atalhos deste aparelho?',
+      () => {
+        setMyMainName('');
+        setNameHistory([]);
+        localStorage.removeItem('cerradao_user_main_name');
+        localStorage.removeItem('cerradao_user_name_history');
+        onShowToast('Atalhos limpos', 'Todos os seus nomes salvos foram removidos.', 'info');
+      }
+    );
   };
 
   const handleSubmit = (e: React.FormEvent) => {
