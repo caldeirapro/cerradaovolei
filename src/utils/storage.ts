@@ -58,6 +58,8 @@ export const saveStoredPlayers = async (players: Player[]) => {
 };
 
 export const getStoredMatchDetails = async (): Promise<MatchDetails> => {
+  const currentCalculated = getNextPreferredMatchDate();
+
   try {
     const { data, error } = await supabase
       .from('cerradao_state')
@@ -66,7 +68,20 @@ export const getStoredMatchDetails = async (): Promise<MatchDetails> => {
       .single();
 
     if (!error && data && data.data) {
-      return data.data;
+      const details: MatchDetails = data.data;
+
+      // Se o evento gravado no banco estiver desatualizado ou pulou o jogo de HOJE, atualiza automaticamente
+      if (!details.isManuallyEdited && details.date !== currentCalculated.formattedDate) {
+        const updatedDetails: MatchDetails = {
+          ...details,
+          date: currentCalculated.formattedDate,
+          rawDateStr: currentCalculated.rawDateStr,
+        };
+        await saveStoredMatchDetails(updatedDetails);
+        return updatedDetails;
+      }
+
+      return details;
     }
   } catch (e) {
     console.error('Error fetching match details from Supabase:', e);
@@ -76,7 +91,15 @@ export const getStoredMatchDetails = async (): Promise<MatchDetails> => {
   const stored = localStorage.getItem('cerradao_match_details_v3');
   if (!stored) return INITIAL_MATCH_DETAILS;
   try {
-    return JSON.parse(stored);
+    const details = JSON.parse(stored);
+    if (!details.isManuallyEdited && details.date !== currentCalculated.formattedDate) {
+      return {
+        ...details,
+        date: currentCalculated.formattedDate,
+        rawDateStr: currentCalculated.rawDateStr,
+      };
+    }
+    return details;
   } catch (e) {
     return INITIAL_MATCH_DETAILS;
   }
