@@ -40,7 +40,15 @@ export default function Home() {
 
     loadData();
 
-    // Inscrição em tempo real no Supabase para sincronizar a lista entre todos os usuários!
+    // Polling ativo a cada 3 segundos como garantia para atualizar a tela sem recarregar!
+    const interval = setInterval(async () => {
+      const updatedDetails = await getStoredMatchDetails();
+      const updatedPlayers = await getStoredPlayers();
+      setMatchDetails((prev) => (JSON.stringify(prev) !== JSON.stringify(updatedDetails) ? updatedDetails : prev));
+      setPlayers((prev) => (JSON.stringify(prev) !== JSON.stringify(updatedPlayers) ? updatedPlayers : prev));
+    }, 3000);
+
+    // Inscrição em tempo real no Supabase
     try {
       const channel = supabase
         .channel('cerradao_state_changes')
@@ -57,10 +65,12 @@ export default function Home() {
         .subscribe();
 
       return () => {
+        clearInterval(interval);
         supabase.removeChannel(channel);
       };
     } catch (err) {
       console.error('Realtime subscription error:', err);
+      return () => clearInterval(interval);
     }
   }, []);
 
