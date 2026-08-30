@@ -1,5 +1,6 @@
 import { Player, MatchDetails } from '@/types';
 import { getNextPreferredMatchDate } from '@/utils/helpers';
+import { supabase } from '@/lib/supabase';
 
 const initialNextDate = getNextPreferredMatchDate();
 
@@ -13,16 +14,26 @@ const INITIAL_MATCH_DETAILS: MatchDetails = {
   rawDateStr: initialNextDate.rawDateStr,
 };
 
-// Começa com lista de jogadores vazia por padrão
 const INITIAL_PLAYERS: Player[] = [];
 
-export const getStoredPlayers = (): Player[] => {
+export const getStoredPlayers = async (): Promise<Player[]> => {
+  try {
+    const { data, error } = await supabase
+      .from('cerradao_state')
+      .select('data')
+      .eq('key', 'players')
+      .single();
+
+    if (!error && data && data.data) {
+      return data.data;
+    }
+  } catch (e) {
+    console.error('Error fetching players from Supabase:', e);
+  }
+
   if (typeof window === 'undefined') return INITIAL_PLAYERS;
   const stored = localStorage.getItem('cerradao_players_v4');
-  if (!stored) {
-    localStorage.setItem('cerradao_players_v4', JSON.stringify(INITIAL_PLAYERS));
-    return INITIAL_PLAYERS;
-  }
+  if (!stored) return INITIAL_PLAYERS;
   try {
     return JSON.parse(stored);
   } catch (e) {
@@ -30,48 +41,59 @@ export const getStoredPlayers = (): Player[] => {
   }
 };
 
-export const saveStoredPlayers = (players: Player[]) => {
+export const saveStoredPlayers = async (players: Player[]) => {
   if (typeof window !== 'undefined') {
     localStorage.setItem('cerradao_players_v4', JSON.stringify(players));
-    window.dispatchEvent(new Event('storage_cerradao_players'));
-  }
-};
-
-export const getStoredMatchDetails = (): MatchDetails => {
-  if (typeof window === 'undefined') return INITIAL_MATCH_DETAILS;
-  const stored = localStorage.getItem('cerradao_match_details_v3');
-  const todayStr = new Date().toISOString().split('T')[0];
-
-  if (!stored) {
-    localStorage.setItem('cerradao_match_details_v3', JSON.stringify(INITIAL_MATCH_DETAILS));
-    return INITIAL_MATCH_DETAILS;
   }
 
   try {
-    const details: MatchDetails = JSON.parse(stored);
+    await supabase.from('cerradao_state').upsert({
+      key: 'players',
+      data: players,
+      updated_at: new Date().toISOString(),
+    });
+  } catch (e) {
+    console.error('Error saving players to Supabase:', e);
+  }
+};
 
-    // Se a data NÃO foi editada manualmente pelo usuário E o dia do jogo já passou,
-    // atualiza automaticamente para a próxima terça, quinta ou domingo!
-    if (!details.isManuallyEdited && details.rawDateStr && details.rawDateStr < todayStr) {
-      const nextMatch = getNextPreferredMatchDate();
-      const updatedDetails: MatchDetails = {
-        ...details,
-        date: nextMatch.formattedDate,
-        rawDateStr: nextMatch.rawDateStr,
-      };
-      localStorage.setItem('cerradao_match_details_v3', JSON.stringify(updatedDetails));
-      return updatedDetails;
+export const getStoredMatchDetails = async (): Promise<MatchDetails> => {
+  try {
+    const { data, error } = await supabase
+      .from('cerradao_state')
+      .select('data')
+      .eq('key', 'match_details')
+      .single();
+
+    if (!error && data && data.data) {
+      return data.data;
     }
+  } catch (e) {
+    console.error('Error fetching match details from Supabase:', e);
+  }
 
-    return details;
+  if (typeof window === 'undefined') return INITIAL_MATCH_DETAILS;
+  const stored = localStorage.getItem('cerradao_match_details_v3');
+  if (!stored) return INITIAL_MATCH_DETAILS;
+  try {
+    return JSON.parse(stored);
   } catch (e) {
     return INITIAL_MATCH_DETAILS;
   }
 };
 
-export const saveStoredMatchDetails = (details: MatchDetails) => {
+export const saveStoredMatchDetails = async (details: MatchDetails) => {
   if (typeof window !== 'undefined') {
     localStorage.setItem('cerradao_match_details_v3', JSON.stringify(details));
-    window.dispatchEvent(new Event('storage_cerradao_match'));
+  }
+
+  try {
+    await supabase.from('cerradao_state').upsert({
+      key: 'match_details',
+      data: details,
+      updated_at: new Date().toISOString(),
+    });
+  } catch (e) {
+    console.error('Error saving match details to Supabase:', e);
   }
 };

@@ -10,6 +10,7 @@ import {
 } from '@/utils/storage';
 import { formatWhatsAppMessage } from '@/utils/helpers';
 import { sendListWebhook } from '@/utils/webhook';
+import { supabase } from '@/lib/supabase';
 import { MatchHeader } from '@/components/MatchHeader';
 import { AddPlayerForm } from '@/components/AddPlayerForm';
 import { PlayerList } from '@/components/PlayerList';
@@ -30,19 +31,32 @@ export default function Home() {
   const [copiedWhatsApp, setCopiedWhatsApp] = useState(false);
 
   useEffect(() => {
-    setMatchDetails(getStoredMatchDetails());
-    setPlayers(getStoredPlayers());
-
-    const handleStorage = () => {
-      setPlayers(getStoredPlayers());
-      setMatchDetails(getStoredMatchDetails());
+    const loadData = async () => {
+      const details = await getStoredMatchDetails();
+      const loadedPlayers = await getStoredPlayers();
+      setMatchDetails(details);
+      setPlayers(loadedPlayers);
     };
 
-    window.addEventListener('storage_cerradao_players', handleStorage);
-    window.addEventListener('storage_cerradao_match', handleStorage);
+    loadData();
+
+    // Inscrição em tempo real no Supabase para sincronizar a lista entre todos os usuários!
+    const channel = supabase
+      .channel('cerradao_state_changes')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'cerradao_state' },
+        async () => {
+          const updatedDetails = await getStoredMatchDetails();
+          const updatedPlayers = await getStoredPlayers();
+          setMatchDetails(updatedDetails);
+          setPlayers(updatedPlayers);
+        }
+      )
+      .subscribe();
+
     return () => {
-      window.removeEventListener('storage_cerradao_players', handleStorage);
-      window.removeEventListener('storage_cerradao_match', handleStorage);
+      supabase.removeChannel(channel);
     };
   }, []);
 
