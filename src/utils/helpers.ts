@@ -46,23 +46,42 @@ export function formatWhatsAppMessage(details: MatchDetails, players: Player[]):
   return text;
 }
 
+export function getNowInBRT(): Date {
+  const now = new Date();
+  const brtString = now.toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' });
+  return new Date(brtString);
+}
+
 /**
  * Calculates the next preferred match date (Tuesday = 2, Thursday = 4, Sunday = 0)
- * Format: "Terça-feira, 01 de Setembro"
+ * Match days (Terça, Quinta, Domingo) stay active until 23:58 (BRT).
+ * After 23:58, it automatically advances to the next preferred day.
+ * Format: "Domingo, 30 de Agosto"
  */
-export function getNextPreferredMatchDate(fromDate: Date = new Date()): { formattedDate: string; rawDateStr: string } {
+export function getNextPreferredMatchDate(fromDate: Date = getNowInBRT()): { formattedDate: string; rawDateStr: string } {
   const preferredDays = [2, 4, 0]; // Tuesday (2), Thursday (4), Sunday (0)
   const currentDay = fromDate.getDay();
+  const currentHour = fromDate.getHours();
+  const currentMinute = fromDate.getMinutes();
 
-  // Se HOJE é um dia de jogo (Terça=2, Quinta=4, Domingo=0), a partida de hoje é válida até o final do dia!
+  const isMatchDay = preferredDays.includes(currentDay);
+  const isBeforeTurnOfDay = currentHour < 23 || (currentHour === 23 && currentMinute < 58);
+
   let minDaysToAdd = 7;
-  for (const targetDay of preferredDays) {
-    let daysToAdd = targetDay - currentDay;
-    if (daysToAdd < 0) {
-      daysToAdd += 7;
-    }
-    if (daysToAdd < minDaysToAdd) {
-      minDaysToAdd = daysToAdd;
+
+  if (isMatchDay && isBeforeTurnOfDay) {
+    // HOJE é dia de jogo e ainda não passou das 23h58: a partida de HOJE continua ativa!
+    minDaysToAdd = 0;
+  } else {
+    // HOJE já passou das 23h58 ou não é dia de jogo: calcula o próximo dia preferencial
+    for (const targetDay of preferredDays) {
+      let daysToAdd = targetDay - currentDay;
+      if (daysToAdd <= 0) {
+        daysToAdd += 7;
+      }
+      if (daysToAdd < minDaysToAdd) {
+        minDaysToAdd = daysToAdd;
+      }
     }
   }
 
@@ -99,7 +118,7 @@ export function getNextPreferredMatchDate(fromDate: Date = new Date()): { format
   const monthName = monthNames[nextDate.getMonth()];
 
   const formattedDate = `${dayOfWeek}, ${dayNumber} de ${monthName}`;
-  const rawDateStr = nextDate.toISOString().split('T')[0];
+  const rawDateStr = `${nextDate.getFullYear()}-${String(nextDate.getMonth() + 1).padStart(2, '0')}-${dayNumber}`;
 
   return { formattedDate, rawDateStr };
 }

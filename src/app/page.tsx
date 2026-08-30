@@ -8,7 +8,7 @@ import {
   getStoredMatchDetails,
   saveStoredMatchDetails,
 } from '@/utils/storage';
-import { formatWhatsAppMessage, sanitizePlayerName } from '@/utils/helpers';
+import { formatWhatsAppMessage, sanitizePlayerName, getNextPreferredMatchDate } from '@/utils/helpers';
 import { sendListWebhook } from '@/utils/webhook';
 import { supabase } from '@/lib/supabase';
 import { MatchHeader } from '@/components/MatchHeader';
@@ -22,7 +22,7 @@ import confetti from 'canvas-confetti';
 export default function Home() {
   const [matchDetails, setMatchDetails] = useState<MatchDetails>({
     title: "Cerradão Vôlei",
-    date: "Terça-feira, 02 de Setembro",
+    date: getNextPreferredMatchDate().formattedDate,
     time: "A partir das 19h00",
     location: "Parque da Cidade - Estacionamento 7",
     maxPlayers: 18,

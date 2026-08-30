@@ -70,12 +70,15 @@ export const getStoredMatchDetails = async (): Promise<MatchDetails> => {
     if (!error && data && data.data) {
       const details: MatchDetails = data.data;
 
-      // Se o evento gravado no banco estiver desatualizado ou pulou o jogo de HOJE, atualiza automaticamente
-      if (!details.isManuallyEdited && details.date !== currentCalculated.formattedDate) {
+      // Se a data calculada atual for diferente da data salva ou estiver desatualizada, atualiza automaticamente
+      const isOutdated = !details.rawDateStr || details.rawDateStr < currentCalculated.rawDateStr;
+
+      if (!details.isManuallyEdited || isOutdated || details.date !== currentCalculated.formattedDate) {
         const updatedDetails: MatchDetails = {
           ...details,
           date: currentCalculated.formattedDate,
           rawDateStr: currentCalculated.rawDateStr,
+          isManuallyEdited: false,
         };
         await saveStoredMatchDetails(updatedDetails);
         return updatedDetails;
@@ -92,7 +95,7 @@ export const getStoredMatchDetails = async (): Promise<MatchDetails> => {
   if (!stored) return INITIAL_MATCH_DETAILS;
   try {
     const details = JSON.parse(stored);
-    if (!details.isManuallyEdited && details.date !== currentCalculated.formattedDate) {
+    if (!details.isManuallyEdited || details.date !== currentCalculated.formattedDate) {
       return {
         ...details,
         date: currentCalculated.formattedDate,
