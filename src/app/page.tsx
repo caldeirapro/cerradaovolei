@@ -41,23 +41,27 @@ export default function Home() {
     loadData();
 
     // Inscrição em tempo real no Supabase para sincronizar a lista entre todos os usuários!
-    const channel = supabase
-      .channel('cerradao_state_changes')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'cerradao_state' },
-        async () => {
-          const updatedDetails = await getStoredMatchDetails();
-          const updatedPlayers = await getStoredPlayers();
-          setMatchDetails(updatedDetails);
-          setPlayers(updatedPlayers);
-        }
-      )
-      .subscribe();
+    try {
+      const channel = supabase
+        .channel('cerradao_state_changes')
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'cerradao_state' },
+          async () => {
+            const updatedDetails = await getStoredMatchDetails();
+            const updatedPlayers = await getStoredPlayers();
+            setMatchDetails(updatedDetails);
+            setPlayers(updatedPlayers);
+          }
+        )
+        .subscribe();
 
-    return () => {
-      supabase.removeChannel(channel);
-    };
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    } catch (err) {
+      console.error('Realtime subscription error:', err);
+    }
   }, []);
 
   const handleUpdateMatchDetails = (newDetails: MatchDetails) => {
