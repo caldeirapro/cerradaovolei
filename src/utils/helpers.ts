@@ -54,12 +54,12 @@ export function getNextPreferredMatchDate(fromDate: Date = new Date()): { format
   const preferredDays = [2, 4, 0]; // Tuesday (2), Thursday (4), Sunday (0)
   const currentDay = fromDate.getDay();
 
-  // Find days to add until the next preferred day
+  // Se HOJE é um dia de jogo (Terça=2, Quinta=4, Domingo=0), a partida de hoje é válida até o final do dia!
   let minDaysToAdd = 7;
   for (const targetDay of preferredDays) {
     let daysToAdd = targetDay - currentDay;
-    if (daysToAdd <= 0) {
-      daysToAdd += 7; // Must be in the future (next match)
+    if (daysToAdd < 0) {
+      daysToAdd += 7;
     }
     if (daysToAdd < minDaysToAdd) {
       minDaysToAdd = daysToAdd;
