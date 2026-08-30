@@ -1,8 +1,5 @@
 import { NextResponse } from 'next/server';
-import path from 'path';
-import fs from 'fs';
-
-const outboxFile = path.join(process.cwd(), 'whatsapp-outbox.json');
+import { supabase } from '@/lib/supabase';
 
 export async function POST(request: Request) {
   try {
@@ -16,28 +13,20 @@ export async function POST(request: Request) {
     const decodedMessage = decodeURIComponent(formattedMessage);
     const groupJid = process.env.WHATSAPP_GROUP_JID || '120363413913766840@g.us';
 
-    let outbox: Array<{ id: string; groupJid: string; message: string; createdAt: number }> = [];
-
-    if (fs.existsSync(outboxFile)) {
-      try {
-        const content = fs.readFileSync(outboxFile, 'utf-8');
-        outbox = JSON.parse(content);
-      } catch (err) {
-        outbox = [];
+    const { error } = await supabase.from('whatsapp_outbox').insert([
+      {
+        group_jid: groupJid,
+        message: decodedMessage,
+        status: 'pending'
       }
+    ]);
+
+    if (error) {
+      console.error('[API Webhook Supabase Error]:', error);
+      return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    // Adiciona a nova mensagem à fila outbox
-    outbox.push({
-      id: Date.now().toString(),
-      groupJid,
-      message: decodedMessage,
-      createdAt: Date.now(),
-    });
-
-    fs.writeFileSync(outboxFile, JSON.stringify(outbox, null, 2));
-
-    return NextResponse.json({ success: true, message: 'Message queued for WhatsApp delivery' });
+    return NextResponse.json({ success: true, message: 'Message queued for WhatsApp delivery in Supabase' });
   } catch (error: any) {
     console.error('[API Webhook Error]:', error);
     return NextResponse.json({ error: error.message || 'Internal Error' }, { status: 500 });

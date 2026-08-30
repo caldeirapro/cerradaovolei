@@ -6,6 +6,7 @@ import makeWASocket, {
 import { Boom } from '@hapi/boom';
 import path from 'path';
 import fs from 'fs';
+import { supabase } from '../lib/supabase';
 
 let sock: WASocket | null = null;
 let isConnected = false;
@@ -71,7 +72,7 @@ export function isWhatsAppConnected(): boolean {
   return isConnected;
 }
 
-const outboxFile = path.join(process.cwd(), 'whatsapp-outbox.json');
+
 let isProcessingQueue = false;
 let isQueueStarted = false;
 
@@ -81,33 +82,42 @@ export function startWhatsAppOutboxQueue() {
   }
   isQueueStarted = true;
 
-  console.log('[WhatsApp Bot Queue] Fila de envio iniciada (verificando a cada 3s)...');
+  console.log('[WhatsApp Bot Queue] Fila do Supabase iniciada (verificando a cada 3s)...');
   setInterval(async () => {
     if (!sock || !isConnected || isProcessingQueue) {
-      return;
-    }
-
-    if (!fs.existsSync(outboxFile)) {
       return;
     }
 
     isProcessingQueue = true;
 
     try {
-      const content = fs.readFileSync(outboxFile, 'utf-8');
-      const outbox: Array<{ id: string; groupJid: string; message: string; createdAt: number }> = JSON.parse(content);
+      const { data: pendingMessages, error } = await supabase
+        .from('whatsapp_outbox')
+        .select('*')
+        .eq('status', 'pending')
+        .order('created_at', { ascending: true });
 
-      if (outbox.length > 0) {
-        console.log(`[WhatsApp Bot Queue] Processando ${outbox.length} mensagem(ns) pendente(s)...`);
+      if (error) {
+        // Ignora silenciosamente erros de conexão pontuais
+        return;
+      }
+
+      if (pendingMessages && pendingMessages.length > 0) {
+        console.log(`[WhatsApp Bot Queue] Encontradas ${pendingMessages.length} mensagem(ns) pendente(s) no Supabase.`);
         
-        // Pega a mensagem mais recente para enviar e limpa a fila IMEDIATAMENTE
-        const itemToSend = outbox[outbox.length - 1];
-        fs.writeFileSync(outboxFile, JSON.stringify([], null, 2));
+        // Pega a mensagem mais recente e marca todas pendentes anteriores como canceladas/enviadas para evitar flood
+        const itemToSend = pendingMessages[pendingMessages.length - 1];
+        
+        const idsToUpdate = pendingMessages.map((m: any) => m.id);
+        await supabase
+          .from('whatsapp_outbox')
+          .update({ status: 'sent' })
+          .in('id', idsToUpdate);
 
-        await sendGroupMessage(itemToSend.groupJid, itemToSend.message);
+        await sendGroupMessage(itemToSend.group_jid, itemToSend.message);
       }
     } catch (err) {
-      console.error('[WhatsApp Bot Queue] Erro ao ler fila de envio:', err);
+      console.error('[WhatsApp Bot Queue] Erro ao processar fila do Supabase:', err);
     } finally {
       isProcessingQueue = false;
     }
