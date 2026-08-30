@@ -86,6 +86,16 @@ export default function Home() {
     // Busca o estado mais recente do banco para evitar sobrescrever inserções simultâneas de outros usuários
     const currentLatestPlayers = await getStoredPlayers();
 
+    // Bloqueia adição se o nome já estiver exatamente na lista
+    const alreadyExists = currentLatestPlayers.some(
+      (p) => p.name.toLowerCase() === cleanName.toLowerCase()
+    );
+
+    if (alreadyExists) {
+      alert(`O nome "${cleanName}" já está na lista!`);
+      return;
+    }
+
     const newPlayer: Player = {
       id: `${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
       name: cleanName,
