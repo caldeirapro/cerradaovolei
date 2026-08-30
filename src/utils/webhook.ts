@@ -19,12 +19,9 @@ export async function sendListWebhook(
   matchDetails: MatchDetails,
   newPlayerName?: string
 ): Promise<boolean> {
-  const webhookUrl = process.env.NEXT_PUBLIC_WEBHOOK_URL;
-
-  if (!webhookUrl) {
-    console.log('Webhook URL (NEXT_PUBLIC_WEBHOOK_URL) not configured. Skipping webhook dispatch.');
-    return false;
-  }
+  const webhookUrl = process.env.NEXT_PUBLIC_WEBHOOK_URL && !process.env.NEXT_PUBLIC_WEBHOOK_URL.includes('localhost')
+    ? process.env.NEXT_PUBLIC_WEBHOOK_URL
+    : '/api/webhook';
 
   const formattedMessage = formatWhatsAppMessage(matchDetails, players);
 
